@@ -1,3 +1,4 @@
+use crate::program::{load_from_dir, Program};
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 
 pub enum Dir {
@@ -13,12 +14,6 @@ pub struct State {
     pub index: usize,
 }
 
-#[derive(Clone, Debug)]
-pub struct Program {
-    pub name: String,
-    pub cmd: Vec<String>,
-}
-
 impl State {
     pub const fn new() -> Self {
         Self {
@@ -30,31 +25,17 @@ impl State {
     }
 
     pub fn load_progams(&mut self) {
-        self.programs = vec![
-            Program {
-                name: String::from("Spotify"),
-                cmd: vec![String::from("spotify")],
-            },
-            Program {
-                name: String::from("Discord"),
-                cmd: vec![String::from("discord")],
-            },
-            Program {
-                name: String::from("Steam"),
-                cmd: vec![String::from("steam-runtime")],
-            },
-            Program {
-                name: String::from("Telegram"),
-                cmd: vec![String::from("telegram-desktop")],
-            },
-            Program {
-                name: String::from("Dominion"),
-                cmd: vec![
-                    String::from("steam"),
-                    String::from("steam://rungameid/1131620"),
-                ],
-            },
-        ];
+        let mut programs: Vec<Program> = Vec::new();
+
+        [
+            "/home/michael/.local/share/applications",
+            "/usr/share/applications",
+            "/usr/local/share/applications",
+        ]
+        .iter()
+        .for_each(|dir| programs.append(&mut load_from_dir(dir)));
+
+        self.programs = programs;
 
         self.filter();
     }
@@ -108,8 +89,7 @@ impl State {
         let words: Vec<&str> = self.input.split_whitespace().collect();
 
         self.input = match words.len() {
-            0 => String::from(""),
-            1 => String::from(""),
+            0 | 1 => String::from(""),
             _ => match words.split_last() {
                 Some((_, rest)) => rest.join(" "),
                 None => String::from(""),

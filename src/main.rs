@@ -1,6 +1,8 @@
+mod program;
 mod state;
 
-use crate::state::{Dir, Program, State};
+use crate::program::Program;
+use crate::state::{Dir, State};
 use crossterm::{
     event::{self, Event, KeyCode, KeyEventKind, KeyModifiers},
     execute,
@@ -38,6 +40,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             String::from("hyprctl"),
             String::from("dispatch"),
             String::from("exec"),
+            String::from("--"),
         ];
         cmd.append(&mut program.cmd.clone());
 
