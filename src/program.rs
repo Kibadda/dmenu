@@ -35,23 +35,29 @@ pub fn load_from_dir(dir: &str) -> Vec<Program> {
 
         let entry = parse_entry(path).expect("parsing failed");
         let section = entry.section("Desktop Entry");
-        let name = section.attr("Name");
 
         if let Some(exec) = section.attr("Exec") {
             if match section.attr("TryExec") {
                 Some(try_exec) => is_executable(try_exec),
                 None => true,
             } {
+                let mut cmd: Vec<String> = Vec::new();
+
+                if let Some(terminal) = section.attr("Terminal") {
+                    if terminal == "true" {
+                        cmd.push(String::from("kitty"));
+                    }
+                }
+
+                exec.split_whitespace()
+                    .for_each(|s| cmd.push(s.to_string()));
+
                 programs.push(Program {
-                    name: match name {
+                    name: match section.attr("Name") {
                         Some(name) => name.to_owned(),
                         None => exec.to_owned(),
                     },
-                    cmd: exec
-                        .to_owned()
-                        .split_whitespace()
-                        .map(str::to_string)
-                        .collect(),
+                    cmd,
                 });
             }
         }
