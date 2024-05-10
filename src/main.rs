@@ -127,7 +127,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     if let Ok(Some(program)) = res {
         Command::new(&program.cmd[0])
-            .args(program.cmd)
+            .args(&program.cmd[1..])
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::null())
