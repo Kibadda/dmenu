@@ -6,7 +6,7 @@ pub enum Dir {
     Same,
 }
 
-pub struct App {
+pub struct State {
     pub input: String,
     pub programs: Vec<Program>,
     pub filtered_programs: Vec<Program>,
@@ -19,7 +19,7 @@ pub struct Program {
     pub cmd: Vec<String>,
 }
 
-impl App {
+impl State {
     pub const fn new() -> Self {
         Self {
             input: String::new(),

@@ -1,6 +1,6 @@
 mod state;
 
-use crate::state::{App, Dir, Program};
+use crate::state::{Dir, Program, State};
 use crossterm::{
     event::{self, Event, KeyCode, KeyEventKind, KeyModifiers},
     execute,
@@ -30,7 +30,7 @@ fn restore_terminal(
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut terminal = setup_terminal()?;
-    let res = run(&mut terminal, App::new());
+    let res = run(&mut terminal, State::new());
     restore_terminal(&mut terminal)?;
 
     if let Ok(Some(program)) = res {
@@ -55,39 +55,39 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn run(
     terminal: &mut Terminal<CrosstermBackend<Stdout>>,
-    mut app: App,
+    mut state: State,
 ) -> io::Result<Option<Program>> {
-    app.load_progams();
+    state.load_progams();
 
     loop {
-        terminal.draw(|f| ui(f, &app))?;
+        terminal.draw(|f| ui(f, &state))?;
 
         if let Event::Key(key) = event::read()? {
             if key.kind == KeyEventKind::Press {
                 match key.code {
                     KeyCode::Char('j') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                        app.move_index(Dir::Down);
+                        state.move_index(Dir::Down);
                     }
                     KeyCode::Char('k') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                        app.move_index(Dir::Up);
+                        state.move_index(Dir::Up);
                     }
                     KeyCode::Char('w') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                        app.delete_word();
+                        state.delete_word();
                     }
                     KeyCode::Up => {
-                        app.move_index(Dir::Up);
+                        state.move_index(Dir::Up);
                     }
                     KeyCode::Down => {
-                        app.move_index(Dir::Down);
+                        state.move_index(Dir::Down);
                     }
                     KeyCode::Char(to_insert) => {
-                        app.enter_char(to_insert);
+                        state.enter_char(to_insert);
                     }
                     KeyCode::Backspace => {
-                        app.delete_char();
+                        state.delete_char();
                     }
                     KeyCode::Enter => {
-                        return Ok(Some(app.filtered_programs[app.index].clone()));
+                        return Ok(Some(state.filtered_programs[state.index].clone()));
                     }
                     KeyCode::Esc => {
                         return Ok(None);
@@ -99,7 +99,7 @@ fn run(
     }
 }
 
-fn ui(frame: &mut Frame, app: &App) {
+fn ui(frame: &mut Frame, state: &State) {
     let vertical = Layout::vertical([
         Constraint::Length(1),
         Constraint::Length(3),
@@ -117,21 +117,21 @@ fn ui(frame: &mut Frame, app: &App) {
     let help = Paragraph::new(text);
     frame.render_widget(help, help_area);
 
-    let search = Paragraph::new(app.input.as_str())
+    let search = Paragraph::new(state.input.as_str())
         .style(Style::default())
         .block(Block::bordered().title(" Search "));
     frame.render_widget(search, search_area);
     frame.set_cursor(
-        search_area.x + app.input.len() as u16 + 1,
+        search_area.x + state.input.len() as u16 + 1,
         search_area.y + 1,
     );
 
-    let programs: Vec<ListItem> = app
+    let programs: Vec<ListItem> = state
         .filtered_programs
         .iter()
         .enumerate()
         .map(|(i, p)| {
-            let content = Line::from(match app.index == i {
+            let content = Line::from(match state.index == i {
                 true => Span::raw(&p.name).style(Style::default().fg(Color::LightBlue)),
                 false => Span::raw(&p.name),
             });
