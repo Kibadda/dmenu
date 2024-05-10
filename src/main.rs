@@ -1,14 +1,15 @@
 use crossterm::{
-    event::{
-        self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind, KeyModifiers,
-    },
+    event::{self, Event, KeyCode, KeyEventKind, KeyModifiers},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
-use nix::unistd;
 use ratatui::{prelude::*, widgets::*};
-use std::{error::Error, ffi::CString, io};
+use std::{
+    error::Error,
+    io::{self, Stdout},
+    process::{Command, Stdio},
+};
 
 enum Dir {
     Up,
@@ -90,13 +91,13 @@ impl App {
             self.index = 0;
         } else {
             self.index = match dir {
-                Dir::Up => match self.index == len - 1 {
-                    true => 0,
-                    false => self.index + 1,
-                },
-                Dir::Down => match self.index == 0 {
+                Dir::Up => match self.index == 0 {
                     true => len - 1,
                     false => self.index - 1,
+                },
+                Dir::Down => match self.index == len - 1 {
+                    true => 0,
+                    false => self.index + 1,
                 },
                 Dir::Same => self.index.clamp(0, len - 1),
             }
@@ -104,44 +105,33 @@ impl App {
     }
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
-    enable_raw_mode()?;
+fn setup_terminal() -> Result<Terminal<CrosstermBackend<Stdout>>, Box<dyn Error>> {
     let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
-    let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend)?;
+    enable_raw_mode()?;
+    execute!(stdout, EnterAlternateScreen)?;
+    Ok(Terminal::new(CrosstermBackend::new(stdout))?)
+}
 
-    let app = App::new();
-    let res = run_app(&mut terminal, app);
-
+fn restore_terminal(
+    terminal: &mut Terminal<CrosstermBackend<Stdout>>,
+) -> Result<(), Box<dyn Error>> {
     disable_raw_mode()?;
-    execute!(
-        terminal.backend_mut(),
-        LeaveAlternateScreen,
-        DisableMouseCapture
-    )?;
-    terminal.show_cursor()?;
+    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+    Ok(terminal.show_cursor()?)
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    let mut terminal = setup_terminal()?;
+    let res = run_app(&mut terminal, App::new());
+    restore_terminal(&mut terminal)?;
 
     if let Ok(Some(program)) = res {
-        //let args: Vec<CString> = program
-        //    .cmd
-        //    .iter()
-        //    .map(|a| CString::new(a.clone()).expect("not a proper CString"))
-        //    .collect();
-        //println!("{args:?}");
-        let _ = std::process::Command::new("spotify")
-            .arg("&")
-            .arg("disown")
-            .spawn()?
-            .wait();
-        //unistd::execv(
-        //    &CString::new("/usr/bin/spotify").expect("failed"),
-        //    &[CString::new("").expect("failed 2")],
-        //)
-        //.expect("failed 3");
-        //if let Err(err) = unistd::execv(&args[0], &args) {
-        //    println!("{err:?}");
-        //}
+        Command::new(&program.cmd[0])
+            .args(program.cmd)
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()?;
     }
 
     Ok(())
