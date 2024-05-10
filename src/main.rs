@@ -34,13 +34,20 @@ fn main() -> Result<(), Box<dyn Error>> {
     restore_terminal(&mut terminal)?;
 
     if let Ok(Some(program)) = res {
-        Command::new(&program.cmd[0])
-            .args(&program.cmd[1..])
+        let mut cmd = vec![
+            String::from("hyprctl"),
+            String::from("dispatch"),
+            String::from("exec"),
+        ];
+        cmd.append(&mut program.cmd.clone());
+
+        Command::new(&cmd[0])
+            .args(&cmd[1..])
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::null())
-            .spawn()?;
-        //std::thread::sleep(std::time::Duration::from_millis(5000));
+            .spawn()?
+            .wait()?;
     }
 
     Ok(())

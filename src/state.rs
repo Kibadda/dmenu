@@ -40,8 +40,19 @@ impl App {
                 cmd: vec![String::from("discord")],
             },
             Program {
-                name: String::from("Neovim"),
-                cmd: vec![String::from("nvim")],
+                name: String::from("Steam"),
+                cmd: vec![String::from("steam-runtime")],
+            },
+            Program {
+                name: String::from("Telegram"),
+                cmd: vec![String::from("telegram-desktop")],
+            },
+            Program {
+                name: String::from("Dominion"),
+                cmd: vec![
+                    String::from("steam"),
+                    String::from("steam://rungameid/1131620"),
+                ],
             },
         ];
 
