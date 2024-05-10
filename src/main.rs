@@ -40,6 +40,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .spawn()?;
+        //std::thread::sleep(std::time::Duration::from_millis(5000));
     }
 
     Ok(())
