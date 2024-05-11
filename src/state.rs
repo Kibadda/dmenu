@@ -1,5 +1,6 @@
 use crate::program::{load_from_dir, Program};
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
+use ratatui::widgets::ListState;
 
 pub enum Dir {
     Up,
@@ -11,16 +12,16 @@ pub struct State {
     pub input: String,
     pub programs: Vec<Program>,
     pub filtered_programs: Vec<Program>,
-    pub index: usize,
+    pub list_state: ListState,
 }
 
 impl State {
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             input: String::new(),
             programs: vec![],
             filtered_programs: vec![],
-            index: 0,
+            list_state: ListState::default(),
         }
     }
 
@@ -69,19 +70,34 @@ impl State {
         let len = self.filtered_programs.len();
 
         if len == 0 {
-            self.index = 0;
+            self.list_state.select(Some(0));
         } else {
-            self.index = match dir {
-                Dir::Up => match self.index == 0 {
-                    true => len - 1,
-                    false => self.index - 1,
-                },
-                Dir::Down => match self.index == len - 1 {
-                    true => 0,
-                    false => self.index + 1,
-                },
-                Dir::Same => self.index.clamp(0, len - 1),
-            }
+            self.list_state.select(match dir {
+                Dir::Down => Some(match self.list_state.selected() {
+                    Some(i) => {
+                        if i >= self.filtered_programs.len() - 1 {
+                            0
+                        } else {
+                            i + 1
+                        }
+                    }
+                    None => 0,
+                }),
+                Dir::Up => Some(match self.list_state.selected() {
+                    Some(i) => {
+                        if i == 0 {
+                            self.filtered_programs.len() - 1
+                        } else {
+                            i - 1
+                        }
+                    }
+                    None => 0,
+                }),
+                Dir::Same => Some(match self.list_state.selected() {
+                    Some(i) => i.clamp(0, self.filtered_programs.len() - 1),
+                    None => 0,
+                }),
+            });
         };
     }
 

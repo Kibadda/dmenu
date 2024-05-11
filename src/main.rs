@@ -63,7 +63,7 @@ fn run(
     state.load_progams();
 
     loop {
-        terminal.draw(|f| ui(f, &state))?;
+        terminal.draw(|f| ui(f, &mut state))?;
 
         if let Event::Key(key) = event::read()? {
             if key.kind == KeyEventKind::Press {
@@ -90,7 +90,9 @@ fn run(
                         state.delete_char();
                     }
                     KeyCode::Enter => {
-                        return Ok(Some(state.filtered_programs[state.index].clone()));
+                        if let Some(i) = state.list_state.selected() {
+                            return Ok(Some(state.filtered_programs[i].clone()));
+                        }
                     }
                     KeyCode::Esc => {
                         return Ok(None);
@@ -102,7 +104,7 @@ fn run(
     }
 }
 
-fn ui(frame: &mut Frame, state: &State) {
+fn ui(frame: &mut Frame, state: &mut State) {
     let vertical = Layout::vertical([
         Constraint::Length(1),
         Constraint::Length(3),
@@ -132,17 +134,17 @@ fn ui(frame: &mut Frame, state: &State) {
     let programs: Vec<ListItem> = state
         .filtered_programs
         .iter()
-        .enumerate()
-        .map(|(i, p)| {
-            let content = Line::from(match state.index == i {
-                true => Span::raw(&p.name).style(Style::default().fg(Color::LightBlue)),
-                false => Span::raw(&p.name),
-            });
-            ListItem::new(content)
-        })
+        .map(|p| ListItem::new(Line::from(Span::raw(&p.name))))
         .collect();
 
-    let programs = List::new(programs).block(Block::bordered().title(" Programs "));
+    let programs = List::new(programs)
+        .block(Block::bordered().title(" Programs "))
+        .highlight_style(
+            Style::default()
+                .add_modifier(Modifier::BOLD)
+                .fg(Color::LightBlue),
+        )
+        .highlight_symbol("> ");
 
-    frame.render_widget(programs, programs_area);
+    frame.render_stateful_widget(programs, programs_area, &mut state.list_state);
 }
