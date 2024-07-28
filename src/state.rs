@@ -30,9 +30,11 @@ impl State {
         let mut programs: Vec<Program> = Vec::new();
 
         [
-            "/home/michael/.local/share/applications",
-            "/usr/share/applications",
-            "/usr/local/share/applications",
+            // "/home/michael/.local/share/applications",
+            // "/usr/share/applications",
+            // "/usr/local/share/applications",
+            "/run/current-system/sw/share/applications",
+            "/etc/profiles/per-user/michael/share/applications",
         ]
         .iter()
         .for_each(|dir| programs.append(&mut load_from_dir(dir)));
