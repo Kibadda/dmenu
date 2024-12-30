@@ -30,7 +30,7 @@ impl State {
         let mut programs: Vec<Program> = Vec::new();
 
         [
-            // "/home/michael/.local/share/applications",
+            "/home/michael/.local/share/applications",
             // "/usr/share/applications",
             // "/usr/local/share/applications",
             "/run/current-system/sw/share/applications",
