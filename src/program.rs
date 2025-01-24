@@ -50,6 +50,7 @@ pub fn load_from_dir(dir: &str) -> Vec<Program> {
                 }
 
                 exec.split_whitespace()
+                    .filter(|s| !s.starts_with("%"))
                     .for_each(|s| cmd.push(s.to_string()));
 
                 programs.push(Program {
