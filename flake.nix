@@ -15,7 +15,7 @@
         kibadda = (prev.kibadda or { }) // {
           dmenu = final.pkgs.rustPlatform.buildRustPackage {
             name = "dmenu";
-            cargoHash = "sha256-codX6u8E9wrW0p48qftZvJBugiAf5apY1I3dAySzo2E=";
+            cargoHash = "sha256-nuY6bV2T2MI/sZNwHLzqJSMhLHqim+MxRGp0eFQBuWA=";
             src = self;
           };
         };
